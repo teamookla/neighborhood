@@ -1,0 +1,5 @@
+.idea
+*.sublime-*
+.DS_Store
+.vscode
+*.swp
