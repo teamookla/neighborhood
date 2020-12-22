@@ -66,9 +66,12 @@ func (t *Thing) GetRank() float64 { return float64(t.age) }
 Benchmark tests get k-nearest-neighbors from an index of 260,281 Points (spread evenly around the globe).
 Tests were run on a 2019 Macbook Pro 16.
 ```
-BenchmarkNearby_k1-16              57852             20140 ns/op
-BenchmarkNearby_k10-16             34261             34629 ns/op
-BenchmarkNearby_k100-16            15967             75622 ns/op
+BenchmarkNewIndex_1k-16            56618             20565 ns/op
+BenchmarkNewIndex_10k-16            2564            478509 ns/op
+BenchmarkNewIndex_100k-16            186           6410877 ns/op
+BenchmarkNearby_k1-16              58674             20225 ns/op
+BenchmarkNearby_k10-16             34234             35393 ns/op
+BenchmarkNearby_k100-16            15358             78054 ns/op
 ```
 
 ## Attribution
