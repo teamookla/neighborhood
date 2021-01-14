@@ -9,6 +9,11 @@ type Index interface {
 	// interface, the higher ranking Points will be preferred. Nearby may return less than k results if it cannot
 	// find k Points in the Index that meet the Accepter criteria.
 	Nearby(p Point, k int, accept Accepter) []Point
+
+	// Load adds searchable Points to the Index.
+	// Each call to Load will replace all Points in the Index with the provided Points.
+	// Load mutates and returns the Index to allow call chaining.
+	Load(points ...Point) Index
 }
 
 // Point interface defines latitude and longitude accessors
@@ -32,8 +37,8 @@ type Accepter func(p Point) bool
 func AcceptAny(Point) bool { return true }
 
 // NewIndex creates a new neighborhood Index with default options
-func NewIndex(points ...Point) Index {
+func NewIndex() Index {
 	// uses a kd-bush index by default
-	return NewKDBushIndex(DefaultKDBushOptions(), points...)
+	return NewKDBushIndex(DefaultKDBushOptions())
 }
 

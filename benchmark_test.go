@@ -6,47 +6,47 @@ import "testing"
 var idx Index
 var result []Point
 
-func BenchmarkNewIndex_1k(b *testing.B) {
-	points := globalPoints()[0:1000]
+func BenchmarkLoad_1k(b *testing.B) {
+	points := globalPoints(1_000)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		idx = NewIndex(points...)
+		idx = NewIndex().Load(points...)
 	}
 }
 
-func BenchmarkNewIndex_10k(b *testing.B) {
-	points := globalPoints()[0:10000]
+func BenchmarkLoad_10k(b *testing.B) {
+	points := globalPoints(10_000)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		idx = NewIndex(points...)
+		idx = NewIndex().Load(points...)
 	}
 }
 
-func BenchmarkNewIndex_100k(b *testing.B) {
-	points := globalPoints()[0:100000]
+func BenchmarkLoad_100k(b *testing.B) {
+	points := globalPoints(100_000)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		idx = NewIndex(points...)
+		idx = NewIndex().Load(points...)
 	}
 }
 
-func BenchmarkNearby_k1(b *testing.B) {
-	benchmarkNearby(b, 1)
+func BenchmarkNearby_100k_k1(b *testing.B) {
+	benchmarkNearby(b, 100_000,1)
 }
 
-func BenchmarkNearby_k10(b *testing.B) {
-	benchmarkNearby(b, 10)
+func BenchmarkNearby_100k_k10(b *testing.B) {
+	benchmarkNearby(b, 100_000,10)
 }
 
-func BenchmarkNearby_k100(b *testing.B) {
-	benchmarkNearby(b, 100)
+func BenchmarkNearby_100k_k100(b *testing.B) {
+	benchmarkNearby(b, 100_000,100)
 }
 
 
-func benchmarkNearby(b *testing.B, k int) {
-	points := globalPoints()
+func benchmarkNearby(b *testing.B, n, k int) {
+	points := globalPoints(n)
 	origin := namedPoint("seattle")
-	idx := NewIndex(points...)
+	idx := NewIndex().Load(points...)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		result = idx.Nearby(origin, k, AcceptAny)

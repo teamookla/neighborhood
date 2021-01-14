@@ -1,9 +1,13 @@
 package neighborhood
 
-import "math"
+import (
+	"math"
+	"sync"
+)
 
 // KDBush implements the Index interface with a flat kd-tree index. This is the default Index implementation.
 type KDBush struct {
+	sync.RWMutex
 	nodeSize int
 	points   []Point
 	ids      []int
@@ -23,26 +27,39 @@ func DefaultKDBushOptions() KDBushOptions {
 }
 
 // NewKDBushIndex creates a new KDBush Index implementation with given KDBushOptions
-func NewKDBushIndex(opts KDBushOptions, points ...Point) Index {
-	// store indices to the input array and coordinates in separate typed arrays
-	ids := make([]int, len(points))
-	coords := make([]float64, 2*len(points))
-
-	for i := 0; i < len(points); i++ {
-		ids[i] = i
-		coords[2*i] = points[i].Lon()
-		coords[2*i+1] = points[i].Lat()
-	}
-
-	// kd-sort both arrays for efficient search (see comments in sort.go)
-	kdSort(ids, coords, opts.NodeSize, 0, len(ids)-1, 0)
-
+func NewKDBushIndex(opts KDBushOptions) Index {
 	return &KDBush{
 		nodeSize: opts.NodeSize,
-		points:   points,
-		ids:      ids,
-		coords:   coords,
 	}
+}
+
+// Load adds searchable Points to the Index.
+// Each call to Load will replace all Points in the Index with the provided Points.
+// Load mutates and returns the Index to allow call chaining.
+func (idx *KDBush) Load(points ...Point) Index {
+	idx.Lock()
+	defer idx.Unlock()
+
+	// extend or shrink to the length we need
+	if additional := len(points)-len(idx.points); additional > 0 {
+		idx.ids = append(idx.ids, make([]int, len(points)-len(idx.ids))...)
+		idx.coords = append(idx.coords, make([]float64, 2*len(points)-len(idx.coords))...)
+	} else if additional < 0 {
+		idx.ids = idx.ids[0:len(points)]
+		idx.coords = idx.coords[0:2*len(points)]
+	}
+
+	// store indices to the input array and coordinates in separate typed arrays
+	for i := 0; i < len(points); i++ {
+		idx.ids[i] = i
+		idx.coords[2*i] = points[i].Lon()
+		idx.coords[2*i+1] = points[i].Lat()
+	}
+	idx.points = points
+
+	// kd-sort both arrays for efficient search (see comments in sort.go)
+	kdSort(idx.ids, idx.coords, idx.nodeSize, 0, len(idx.ids)-1, 0)
+	return idx
 }
 
 // Nearby finds the k nearest Points to the origin that meet the Accepter criteria.
@@ -50,6 +67,9 @@ func NewKDBushIndex(opts KDBushOptions, points ...Point) Index {
 // interface, the higher ranking Points will be preferred. Nearby may return less than k results if it cannot
 // find k Points in the Index that meet the Accepter criteria.
 func (idx *KDBush) Nearby(origin Point, k int, accept Accepter) []Point {
+	idx.RLock()
+	defer idx.RUnlock()
+
 	result := make([]Point, 0, k)
 
 	// a distance-sorted rank queue that will contain both points and kd-tree nodes

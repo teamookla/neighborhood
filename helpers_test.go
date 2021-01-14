@@ -1,6 +1,7 @@
 package neighborhood
 
 import (
+	"math"
 	"reflect"
 	"testing"
 )
@@ -46,10 +47,15 @@ func namedPoints() []Point {
 	return pts
 }
 
-func globalPoints() []Point {
+// globalPoints gets a list of n Points spread uniformly over the globe
+func globalPoints(n int) []Point {
 	var pts []Point
-	for lat := -90.0; lat <= 90; lat += 0.5 {
-		for lon := -180.0; lon <= 180; lon += 0.5 {
+	maxStepsPerDimension := math.Ceil(math.Sqrt(float64(n)))
+	latStep := 180.0 / maxStepsPerDimension
+	lonStep := 360.0 / maxStepsPerDimension
+
+	for lat := -90.0; lat <= 90; lat += latStep {
+		for lon := -180.0; lon <= 180 && len(pts) < n; lon += lonStep {
 			pts = append(pts, NewCoordinates(lon, lat))
 		}
 	}

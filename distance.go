@@ -2,6 +2,7 @@ package neighborhood
 
 import "math"
 
+// Earth's radius in km for Haversine distance calculations
 const earthRadius = 6371.0
 const rad = math.Pi / 180.0
 

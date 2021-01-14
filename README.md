@@ -1,11 +1,12 @@
 # neighborhood
 A very fast, static, in-memory nearest neighbor (KNN) search index for locations on Earth.
-Accounts for Earth's curvature and date line wrapping. Utilizes a [k-d tree](https://en.wikipedia.org/wiki/K-d_tree)
+Approximates Earth's curvature and accounts for International Date Line wrapping using
+[Haversine great-circle distance formula](https://en.wikipedia.org/wiki/Haversine_formula). Utilizes a [k-d tree](https://en.wikipedia.org/wiki/K-d_tree)
 for very quick spatial searches.
 
 * :white_check_mark: Zero dependency
 * :white_check_mark: Pure Go
-* :white_check_mark: 97.6% test coverage
+* :white_check_mark: 100% test coverage
 * :white_check_mark: Used in production by high-volume services powering [Speedtest](https://speedtest.net)
 
 ## Usage
@@ -33,10 +34,17 @@ type Thing struct {
 }
 ```
 
-### Create an index
-Create a new index with all searchable `Points`. Indexes are static and immutable.
+### Create an Index and load Points
+Create a new index and load all searchable `Points`.
+Each call to `Load` will replace all `Points` in the `Index` with the provided `Points`.
 ```go
-idx := neighborhood.NewIndex(things...)
+idx := neighborhood.NewIndex().Load(things...)
+```
+Load mutates and returns the `Index` to allow call chaining.
+If you don't use call chaining, the returned `Index` can be ignored.
+```go
+idx := neighborhood.NewIndex()
+idx.Load(things...)
 ```
 
 ### Search for `k` Nearest Neighbors
@@ -63,15 +71,16 @@ func (t *Thing) GetRank() float64 { return float64(t.age) }
 ```
 
 ## Performance
-Benchmark tests get k-nearest-neighbors from an index of 260,281 Points (spread evenly around the globe).
-Tests were run on a 2019 Macbook Pro 16.
+Benchmark tests get k-nearest-neighbors from an Index with default options and 100,000 Points
+(uniformly distributed around the globe). Tests were run on a 2019 Macbook Pro 16.
+
 ```
-BenchmarkNewIndex_1k-16            56618             20565 ns/op
-BenchmarkNewIndex_10k-16            2564            478509 ns/op
-BenchmarkNewIndex_100k-16            186           6410877 ns/op
-BenchmarkNearby_k1-16              58674             20225 ns/op
-BenchmarkNearby_k10-16             34234             35393 ns/op
-BenchmarkNearby_k100-16            15358             78054 ns/op
+BenchmarkLoad_1k-16                        50382             24706 ns/op
+BenchmarkLoad_10k-16                        1821            649872 ns/op
+BenchmarkLoad_100k-16                        168           6915047 ns/op
+BenchmarkNearby_100k_k1-16                 72946             16338 ns/op
+BenchmarkNearby_100k_k10-16                71701             16658 ns/op
+BenchmarkNearby_100k_k100-16               12033             97936 ns/op
 ```
 
 ## Attribution
