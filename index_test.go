@@ -88,7 +88,7 @@ func TestKDBush_Nearby_NotEnough(t *testing.T) {
 func TestKDBush_Nearby_MultiNode(t *testing.T) {
 	pts := namedPoints()
 	// use a small NodeSize so our results must come from multiple nodes
-	opts := KDBushOptions{NodeSize: 2}
+	opts := KDTreeOptions{NodeSize: 2}
 	idx := NewKDBushIndex(opts).Load(pts...)
 	origin := NewCoordinates(-175, -60)
 
@@ -161,7 +161,7 @@ func TestKDBush_Nearby_Global(t *testing.T) {
 	results := idx.Nearby(origin, 5, AcceptAny)
 	assertEqual(t, 5, len(results))
 	for _, result := range results {
-		distFromOrigin := distance(origin.Lon(), origin.Lat(), result.Lon(), result.Lat())
+		distFromOrigin := distanceKm(origin, result)
 		// we should find 5 points within 100 km
 		assertEqual(t, true, distFromOrigin < 100)
 	}

@@ -5,8 +5,8 @@ import (
 	"sync"
 )
 
-// KDBush implements the Index interface with a flat kd-tree index. This is the default Index implementation.
-type KDBush struct {
+// KDTree implements the Index interface with a flat kd-tree index. This is the default Index implementation.
+type KDTree struct {
 	sync.RWMutex
 	nodeSize int
 	points   []Point
@@ -14,21 +14,21 @@ type KDBush struct {
 	coords   []float64
 }
 
-// KDBushOptions defines configurable options for the KDBush index
-type KDBushOptions struct {
+// KDTreeOptions defines configurable options for the KDTree index
+type KDTreeOptions struct {
 	NodeSize int
 }
 
-// DefaultKDBushOptions gets the default KDBush options, which you can use directly or modify before creating an Index
-func DefaultKDBushOptions() KDBushOptions {
-	return KDBushOptions{
+// DefaultKDBushOptions gets the default KDTree options, which you can use directly or modify before creating an Index
+func DefaultKDBushOptions() KDTreeOptions {
+	return KDTreeOptions{
 		NodeSize: 64,
 	}
 }
 
-// NewKDBushIndex creates a new KDBush Index implementation with given KDBushOptions
-func NewKDBushIndex(opts KDBushOptions) Index {
-	return &KDBush{
+// NewKDBushIndex creates a new KDTree Index implementation with given KDTreeOptions
+func NewKDBushIndex(opts KDTreeOptions) Index {
+	return &KDTree{
 		nodeSize: opts.NodeSize,
 	}
 }
@@ -36,7 +36,7 @@ func NewKDBushIndex(opts KDBushOptions) Index {
 // Load adds searchable Points to the Index.
 // Each call to Load will replace all Points in the Index with the provided Points.
 // Load mutates and returns the Index to allow call chaining.
-func (idx *KDBush) Load(points ...Point) Index {
+func (idx *KDTree) Load(points ...Point) Index {
 	idx.Lock()
 	defer idx.Unlock()
 
@@ -66,7 +66,7 @@ func (idx *KDBush) Load(points ...Point) Index {
 // If there are multiple Points that are the same distance from the origin and the Points implement the Ranker
 // interface, the higher ranking Points will be preferred. Nearby may return less than k results if it cannot
 // find k Points in the Index that meet the Accepter criteria.
-func (idx *KDBush) Nearby(origin Point, k int, accept Accepter) []Point {
+func (idx *KDTree) Nearby(origin Point, k int, accept Accepter) []Point {
 	idx.RLock()
 	defer idx.RUnlock()
 
@@ -89,27 +89,24 @@ func (idx *KDBush) Nearby(origin Point, k int, accept Accepter) []Point {
 	cosLat := math.Cos(origin.Lat() * rad)
 
 	for node != nil {
-		left := node.Left
-		right := node.Right
-
-		if right-left <= idx.nodeSize { // leaf node
+		if node.Right-node.Left <= idx.nodeSize { // leaf node
 			// add all points of the leaf node to the queue
-			for i := left; i <= right; i++ {
+			for i := node.Left; i <= node.Right; i++ {
 				pt := idx.points[idx.ids[i]]
 				if accept(pt) {
-					dist := haverSinDist(origin.Lon(), origin.Lat(), idx.coords[2*i], idx.coords[2*i+1], cosLat)
+					dist := haverSinDist(origin, idx.coords[2*i], idx.coords[2*i+1], cosLat)
 					q.PushPoint(pt, dist)
 				}
 			}
 		} else { // not a leaf node (has child nodes)
-			m := (left + right) >> 1 // middle index
-			midLng := idx.coords[2*m]
+			m := (node.Left + node.Right) >> 1 // middle index
+			midLon := idx.coords[2*m]
 			midLat := idx.coords[2*m+1]
 
 			// add middle point to the queue
 			pt := idx.points[idx.ids[m]]
 			if accept(pt) {
-				dist := haverSinDist(origin.Lon(), origin.Lat(), midLng, midLat, cosLat)
+				dist := haverSinDist(origin, midLon, midLat, cosLat)
 				q.PushPoint(pt, dist)
 			}
 
@@ -117,14 +114,14 @@ func (idx *KDBush) Nearby(origin Point, k int, accept Accepter) []Point {
 
 			// first half of the node
 			leftNode := &kdTreeNode{
-				Left:   left,
+				Left:   node.Left,
 				Right:  m - 1,
 				Axis:   nextAxis,
 				MinLon: node.MinLon,
 				MinLat: node.MinLat,
 			}
 			if node.Axis == 0 {
-				leftNode.MaxLon = midLng
+				leftNode.MaxLon = midLon
 				leftNode.MaxLat = node.MaxLat
 			} else {
 				leftNode.MaxLon = node.MaxLon
@@ -134,21 +131,21 @@ func (idx *KDBush) Nearby(origin Point, k int, accept Accepter) []Point {
 			// second half of the node
 			rightNode := &kdTreeNode{
 				Left:   m + 1,
-				Right:  right,
+				Right:  node.Right,
 				Axis:   nextAxis,
 				MaxLon: node.MaxLon,
 				MaxLat: node.MaxLat,
 			}
 			if node.Axis == 0 {
-				rightNode.MinLon = midLng
+				rightNode.MinLon = midLon
 				rightNode.MinLat = node.MinLat
 			} else {
 				rightNode.MinLon = node.MinLon
 				rightNode.MinLat = midLat
 			}
 
-			leftNode.Dist = boxDist(origin.Lon(), origin.Lat(), cosLat, leftNode)
-			rightNode.Dist = boxDist(origin.Lon(), origin.Lat(), cosLat, rightNode)
+			leftNode.Dist = boxDist(origin, cosLat, leftNode)
+			rightNode.Dist = boxDist(origin, cosLat, rightNode)
 
 			// add child nodes to the queue
 			q.PushNode(leftNode)
