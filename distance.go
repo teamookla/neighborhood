@@ -2,46 +2,39 @@ package neighborhood
 
 import "math"
 
-// Earth's radius in km for Haversine distance calculations
-const earthRadius = 6371.0
 const rad = math.Pi / 180.0
 
-func distance(lng1, lat1, lng2, lat2 float64) float64 {
-	var h = haverSinDist(lng1, lat1, lng2, lat2, math.Cos(lat1*rad))
-	return 2 * earthRadius * math.Asin(math.Sqrt(h))
+func haverSinDist(pt1 Point, lon2, lat2, cosLat1 float64) float64 {
+	haverSinDLon := haverSin((pt1.Lon() - lon2) * rad)
+	return haverSinDistPartial(haverSinDLon, cosLat1, pt1.Lat(), lat2)
 }
 
 // boxDist gets the lower bound for distance from a location to points inside a bounding box
-func boxDist(lon, lat, cosLat float64, node *kdTreeNode) float64 {
-	minLon := node.MinLon
-	maxLon := node.MaxLon
-	minLat := node.MinLat
-	maxLat := node.MaxLat
-
+func boxDist(pt Point, cosLat float64, node *kdTreeNode) float64 {
 	// query point is between minimum and maximum longitudes
-	if lon >= minLon && lon <= maxLon {
-		if lat < minLat {
-			return haverSin((lat - minLat) * rad)
+	if pt.Lon() >= node.MinLon && pt.Lon() <= node.MaxLon {
+		if pt.Lat() < node.MinLat {
+			return haverSin((pt.Lat() - node.MinLat) * rad)
 		}
-		if lat > maxLat {
-			return haverSin((lat - maxLat) * rad)
+		if pt.Lat() > node.MaxLat {
+			return haverSin((pt.Lat() - node.MaxLat) * rad)
 		}
 		return 0
 	}
 
 	// query point is west or east of the bounding box;
 	// calculate the extremum for great circle distance from query point to the closest longitude;
-	haverSinDLng := math.Min(haverSin((lon-minLon)*rad), haverSin((lon-maxLon)*rad))
-	extremumLat := vertexLat(lat, haverSinDLng)
+	haverSinDLon := math.Min(haverSin((pt.Lon()-node.MinLon)*rad), haverSin((pt.Lon()-node.MaxLon)*rad))
+	extremumLat := vertexLat(pt.Lat(), haverSinDLon)
 
 	// if extremum is inside the box, return the distance to it
-	if extremumLat > minLat && extremumLat < maxLat {
-		return haverSinDistPartial(haverSinDLng, cosLat, lat, extremumLat)
+	if extremumLat > node.MinLat && extremumLat < node.MaxLat {
+		return haverSinDistPartial(haverSinDLon, cosLat, pt.Lat(), extremumLat)
 	}
 	// otherwise return the distance to one of the bbox corners (whichever is closest)
 	return math.Min(
-		haverSinDistPartial(haverSinDLng, cosLat, lat, minLat),
-		haverSinDistPartial(haverSinDLng, cosLat, lat, maxLat),
+		haverSinDistPartial(haverSinDLon, cosLat, pt.Lat(), node.MinLat),
+		haverSinDistPartial(haverSinDLon, cosLat, pt.Lat(), node.MaxLat),
 	)
 }
 
@@ -50,22 +43,17 @@ func haverSin(theta float64) float64 {
 	return math.Pow(s, 2)
 }
 
-func haverSinDistPartial(haverSinDLng, cosLat1, lat1, lat2 float64) float64 {
-	return cosLat1*math.Cos(lat2*rad)*haverSinDLng + haverSin((lat1-lat2)*rad)
+func haverSinDistPartial(haverSinDLon, cosLat1, lat1, lat2 float64) float64 {
+	return cosLat1*math.Cos(lat2*rad)*haverSinDLon + haverSin((lat1-lat2)*rad)
 }
 
-func haverSinDist(lng1, lat1, lng2, lat2, cosLat1 float64) float64 {
-	haverSinDLng := haverSin((lng1 - lng2) * rad)
-	return haverSinDistPartial(haverSinDLng, cosLat1, lat1, lat2)
-}
-
-func vertexLat(lat, haverSinDLng float64) float64 {
-	cosDLng := 1 - 2*haverSinDLng
-	if cosDLng <= 0 {
+func vertexLat(lat, haverSinDLon float64) float64 {
+	cosDLon := 1 - 2*haverSinDLon
+	if cosDLon <= 0 {
 		if lat > 0 {
 			return 90
 		}
 		return -90
 	}
-	return math.Atan(math.Tan(lat*rad)/cosDLng) / rad
+	return math.Atan(math.Tan(lat*rad)/cosDLon) / rad
 }
