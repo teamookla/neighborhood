@@ -19,15 +19,15 @@ type KDTreeOptions struct {
 	NodeSize int
 }
 
-// DefaultKDBushOptions gets the default KDTree options, which you can use directly or modify before creating an Index
-func DefaultKDBushOptions() KDTreeOptions {
+// DefaultKDTreeOptions gets the default KDTree options, which you can use directly or modify before creating an Index
+func DefaultKDTreeOptions() KDTreeOptions {
 	return KDTreeOptions{
 		NodeSize: 64,
 	}
 }
 
-// NewKDBushIndex creates a new KDTree Index implementation with given KDTreeOptions
-func NewKDBushIndex(opts KDTreeOptions) Index {
+// NewKDTreeIndex creates a new KDTree Index implementation with given KDTreeOptions
+func NewKDTreeIndex(opts KDTreeOptions) Index {
 	return &KDTree{
 		nodeSize: opts.NodeSize,
 	}

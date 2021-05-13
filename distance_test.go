@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestHaversineMiles_Simple(t *testing.T) {
+func TestHaversineDistance_Simple(t *testing.T) {
 	pt1 := points["seattle"]
 	pt2 := points["memphis"]
 	dist := distanceKm(pt1, pt2)
 	assertEqual(t, 3003, int(dist))
 }
 
-func TestHaversineMiles_AntiMeridian(t *testing.T) {
+func TestHaversineDistance_AntiMeridian(t *testing.T) {
 	// should go across the date line
 	pt1 := points["anchorage"]
 	pt2 := points["eastrussia"]
@@ -20,7 +20,7 @@ func TestHaversineMiles_AntiMeridian(t *testing.T) {
 	assertEqual(t, 1645, int(dist))
 }
 
-func TestHaversineMiles_Commute(t *testing.T) {
+func TestHaversineDistance_Commute(t *testing.T) {
 	pt1 := points["woodinville"]
 	pt2 := points["seattle"]
 	dist := distanceKm(pt1, pt2)

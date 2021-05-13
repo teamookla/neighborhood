@@ -34,7 +34,7 @@ func TestNewIndex_AnonymousCoordinates(t *testing.T) {
 	assertEqual(t, "thing", results[0].(*Thing).name)
 }
 
-func TestKDBush_Nearby_Simple(t *testing.T) {
+func TestKDTree_Nearby_Simple(t *testing.T) {
 	pts := namedPoints()
 	idx := NewIndex().Load(pts...)
 	origin := NewCoordinates(-115, 45)
@@ -47,7 +47,7 @@ func TestKDBush_Nearby_Simple(t *testing.T) {
 	assertEqual(t, "memphis", results[2].(*NamedPoint).Name)
 }
 
-func TestKDBush_Nearby_NotMemphis(t *testing.T) {
+func TestKDTree_Nearby_NotMemphis(t *testing.T) {
 	pts := namedPoints()
 	idx := NewIndex().Load(pts...)
 	origin := NewCoordinates(-115, 45)
@@ -62,7 +62,7 @@ func TestKDBush_Nearby_NotMemphis(t *testing.T) {
 	assertEqual(t, "anchorage", results[2].(*NamedPoint).Name)
 }
 
-func TestKDBush_Nearby_AntiMeridian(t *testing.T) {
+func TestKDTree_Nearby_AntiMeridian(t *testing.T) {
 	pts := namedPoints()
 	idx := NewIndex().Load(pts...)
 	origin := NewCoordinates(-175, 60)
@@ -75,7 +75,7 @@ func TestKDBush_Nearby_AntiMeridian(t *testing.T) {
 	assertEqual(t, "seattle", results[2].(*NamedPoint).Name)
 }
 
-func TestKDBush_Nearby_NotEnough(t *testing.T) {
+func TestKDTree_Nearby_NotEnough(t *testing.T) {
 	pts := namedPoints()
 	idx := NewIndex().Load(pts...)
 	origin := NewCoordinates(-175, 60)
@@ -85,11 +85,11 @@ func TestKDBush_Nearby_NotEnough(t *testing.T) {
 	assertEqual(t, 8, len(results))
 }
 
-func TestKDBush_Nearby_MultiNode(t *testing.T) {
+func TestKDTree_Nearby_MultiNode(t *testing.T) {
 	pts := namedPoints()
 	// use a small NodeSize so our results must come from multiple nodes
 	opts := KDTreeOptions{NodeSize: 2}
-	idx := NewKDBushIndex(opts).Load(pts...)
+	idx := NewKDTreeIndex(opts).Load(pts...)
 	origin := NewCoordinates(-175, -60)
 
 	results := idx.Nearby(origin, 3, AcceptAny)
@@ -100,7 +100,7 @@ func TestKDBush_Nearby_MultiNode(t *testing.T) {
 	assertEqual(t, "seattle", results[2].(*NamedPoint).Name)
 }
 
-func TestKDBush_Nearby_Picky(t *testing.T) {
+func TestKDTree_Nearby_Picky(t *testing.T) {
 	pts := globalPoints(100_000)
 	idx := NewIndex().Load(pts...)
 
@@ -121,7 +121,7 @@ func TestKDBush_Nearby_Picky(t *testing.T) {
 	assertEqual(t, true, results[0].Lat() > 0)
 }
 
-func TestKDBush_Nearby_Ranked(t *testing.T) {
+func TestKDTree_Nearby_Ranked(t *testing.T) {
 	pts := []Point{
 		&RankedPoint{
 			Point: points["seattle"],
@@ -152,7 +152,7 @@ func TestKDBush_Nearby_Ranked(t *testing.T) {
 	assertEqual(t, "woodinville-super-important", results[2].(*RankedPoint).Name)
 }
 
-func TestKDBush_Nearby_Global(t *testing.T) {
+func TestKDTree_Nearby_Global(t *testing.T) {
 	points := globalPoints(100_000)
 	assertEqual(t, 100_000, len(points))
 	idx := NewIndex().Load(points...)
@@ -167,14 +167,14 @@ func TestKDBush_Nearby_Global(t *testing.T) {
 	}
 }
 
-func TestKDBush_Nearby_Empty(t *testing.T) {
+func TestKDTree_Nearby_Empty(t *testing.T) {
 	idx := NewIndex()
 	origin := NewCoordinates(-122, 47)
 	results := idx.Nearby(origin, 5, AcceptAny)
 	assertEqual(t, 0, len(results))
 }
 
-func TestKDBush_Load_Same(t *testing.T) {
+func TestKDTree_Load_Same(t *testing.T) {
 	origin := NewCoordinates(-122, 47)
 	points := namedPoints()
 
@@ -194,7 +194,7 @@ func TestKDBush_Load_Same(t *testing.T) {
 	assertEqual(t, "woodinville", results[1].(*NamedPoint).Name)
 }
 
-func TestKDBush_Load_More(t *testing.T) {
+func TestKDTree_Load_More(t *testing.T) {
 	origin := NewCoordinates(-122, 47)
 	points := namedPoints()
 
@@ -216,7 +216,7 @@ func TestKDBush_Load_More(t *testing.T) {
 	assertEqual(t, "woodinville", results[2].(*NamedPoint).Name)
 }
 
-func TestKDBush_Load_Less(t *testing.T) {
+func TestKDTree_Load_Less(t *testing.T) {
 	origin := NewCoordinates(-122, 47)
 	// start with duplicated points
 	points := append(namedPoints(), namedPoints()...)

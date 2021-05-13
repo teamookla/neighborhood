@@ -38,7 +38,7 @@ func AcceptAny(Point) bool { return true }
 
 // NewIndex creates a new neighborhood Index with default options
 func NewIndex() Index {
-	// uses a kd-bush index by default
-	return NewKDBushIndex(DefaultKDBushOptions())
+	// uses a kd-tree index by default
+	return NewKDTreeIndex(DefaultKDTreeOptions())
 }
 
