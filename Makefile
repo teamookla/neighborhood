@@ -1,6 +1,7 @@
 .PHONY: build test coverage benchmark
 
 build:
+	go mod tidy
 	go build
 
 test:
