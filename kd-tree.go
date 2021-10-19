@@ -62,6 +62,12 @@ func (idx *KDTree) Load(points ...Point) Index {
 	return idx
 }
 
+// Add allows the addition of individual points instead of the user supplying all points.
+func (idx *KDTree) Add(points ...Point) Index {
+	// Append to the end of the points slice, use that as input to Load() and let it replace the points.
+	return idx.Load(append(idx.points, points...)...)
+}
+
 // Nearby finds the k nearest Points to the origin that meet the Accepter criteria.
 // If there are multiple Points that are the same distance from the origin and the Points implement the Ranker
 // interface, the higher ranking Points will be preferred. Nearby may return less than k results if it cannot
