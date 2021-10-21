@@ -40,11 +40,20 @@ Each call to `Load` will replace all `Points` in the `Index` with the provided `
 ```go
 idx := neighborhood.NewIndex().Load(things...)
 ```
-Load mutates and returns the `Index` to allow call chaining.
+`Load` mutates and returns the `Index` to allow call chaining.
 If you don't use call chaining, the returned `Index` can be ignored.
 ```go
 idx := neighborhood.NewIndex()
 idx.Load(things...)
+```
+
+Each call to `Add` will take the provided points, merge them with the current points in the index.
+`Add` uses `Load` behind the scenes, so it is only as performant as calling `Load`.
+`Add` supports call chaining like `Load` does as well.
+```go
+idx := neighborhood.NewIndex()
+idx.Load(things...)
+idx.Add(aFewMoreThings...)
 ```
 
 ### Search for `k` Nearest Neighbors

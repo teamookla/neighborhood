@@ -47,6 +47,46 @@ func TestKDTree_Nearby_Simple(t *testing.T) {
 	assertEqual(t, "memphis", results[2].(*NamedPoint).Name)
 }
 
+func TestKDTree_Load_And_Add(t *testing.T) {
+	pts := []Point{
+		namedPoint("tokyo"),
+		namedPoint("memphis"),
+		namedPoint("cairo"),
+		namedPoint("seattle"),
+	}
+	idx := NewIndex().Load(pts...)
+	origin := NewCoordinates(-115, 45)
+
+	results := idx.Nearby(origin, 4, AcceptAny)
+	assertEqual(t, 4, len(results))
+	assertEqual(t, "seattle", results[0].(*NamedPoint).Name)
+	assertEqual(t, "memphis", results[1].(*NamedPoint).Name)
+	assertEqual(t, "tokyo", results[2].(*NamedPoint).Name)
+	assertEqual(t, "cairo", results[3].(*NamedPoint).Name)
+
+	additionalPts := []Point{
+		namedPoint("woodinville"),
+		namedPoint("anchorage"),
+		namedPoint("saopaulo"),
+		namedPoint("eastrussia"),
+	}
+
+	// add the remaining points, validate that the new points work
+	idx.Add(additionalPts...)
+	results = idx.Nearby(origin, 6, AcceptAny)
+	assertEqual(t, 6, len(results))
+	assertEqual(t, "woodinville", results[0].(*NamedPoint).Name)
+	assertEqual(t, "seattle", results[1].(*NamedPoint).Name)
+	assertEqual(t, "memphis", results[2].(*NamedPoint).Name)
+	assertEqual(t, "anchorage", results[3].(*NamedPoint).Name)
+	assertEqual(t, "eastrussia", results[4].(*NamedPoint).Name)
+	assertEqual(t, "tokyo", results[5].(*NamedPoint).Name)
+
+	// make sure the number of points is what we expect if we ask for more than we inserted
+	results = idx.Nearby(origin, 10, AcceptAny)
+	assertEqual(t, 8, len(results))
+}
+
 func TestKDTree_Nearby_NotMemphis(t *testing.T) {
 	pts := namedPoints()
 	idx := NewIndex().Load(pts...)

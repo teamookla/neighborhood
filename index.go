@@ -1,4 +1,4 @@
-// Neighborhood is a very fast, static, in-memory nearest neighbor (KNN) search index for locations on Earth.
+// Package neighborhood is a very fast, static, in-memory nearest neighbor (KNN) search index for locations on Earth.
 // Accounts for Earth's curvature and date line wrapping. Utilizes a k-d tree for very quick spatial searches.
 package neighborhood
 
@@ -10,10 +10,13 @@ type Index interface {
 	// find k Points in the Index that meet the Accepter criteria.
 	Nearby(p Point, k int, accept Accepter) []Point
 
-	// Load adds searchable Points to the Index.
-	// Each call to Load will replace all Points in the Index with the provided Points.
+	// Load will replace all Points in the Index with the provided Points.
 	// Load mutates and returns the Index to allow call chaining.
 	Load(points ...Point) Index
+
+	// Add will update the index with the provided points, while persisting the existing points.
+	// Add returns the Index after it is complete to allow call chaining. Add is as-expensive as Load
+	Add(points ...Point) Index
 }
 
 // Point interface defines latitude and longitude accessors
